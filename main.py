@@ -6,7 +6,9 @@ import os
 
 app = FastAPI()
 
+# ============================
 # CORS setup
+# ============================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,16 +17,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Hugging Face Access Token - इसे सीधे कोड में न डालें
-# बल्कि environment variable का उपयोग करें
+# ============================
+# Hugging Face Client Setup
+# ============================
 HF_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
 
-# Hugging Face Inference Client - यहाँ अपने मॉडल का नाम डालें
+if not HF_TOKEN:
+    raise ValueError("❌ Error: HUGGING_FACE_TOKEN environment variable not set")
+
+# यहां आप अपना मॉडल बदल सकते हैं
 client = InferenceClient(model="google/gemma-2b", token=HF_TOKEN)
 
+# ============================
 # Simple cache
+# ============================
 cache = {}
 
+# ============================
+# Chat API
+# ============================
 @app.post("/chat")
 async def chat(request: Request):
     data = await request.json()
@@ -36,27 +47,25 @@ async def chat(request: Request):
     # Cache check
     if user_message in cache:
         return {"reply": cache[user_message]}
-    
-    # यदि टोकन नहीं मिला तो एरर भेजें
-    if not HF_TOKEN:
-        return {"reply": "Error: Hugging Face Token is not set. Please set the HUGGING_FACE_TOKEN environment variable."}
 
     try:
-        # Hugging Face मॉडल से जवाब प्राप्त करना
+        # Hugging Face मॉडल से जवाब
         response = client.text_generation(
-            prompt=user_message,
+            user_message,
             max_new_tokens=150,
-            temperature=0.7,
-            truncate=True
+            temperature=0.7
         )
 
-        reply = response.strip()
+        # कभी string आता है, कभी dict → दोनों handle करो
+        reply = response if isinstance(response, str) else str(response)
+
         cache[user_message] = reply
         return {"reply": reply}
 
     except Exception as e:
         return {"reply": f"माफ़ करना, कुछ दिक्कत है: {e}"}
 
-# Serve index.html - इसे सबसे अंत में रखें
-# यह मानता है कि main.py और index.html एक ही फ़ोल्डर में हैं
+# ============================
+# Serve index.html
+# ============================
 app.mount("/", StaticFiles(directory=".", html=True), name="static")

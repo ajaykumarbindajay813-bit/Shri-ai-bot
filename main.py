@@ -44,9 +44,8 @@ async def chat(request: Request):
         {"role": "user", "content": user_message}
     ],
     temperature=0.3,   
-    max_tokens=150      )
+    max_tokens=150      
 
-        )
         reply = response.choices[0].message["content"]
         cache[user_message] = reply  # cache save
         return {"reply": reply}

@@ -38,13 +38,14 @@ async def chat(request: Request):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Tum ek helpful AI ho jo simple Hindi me jawab deta hai."},
-                {"role": "user", "content": user_message}
-            ],
-            temperature=0.5,   # fast response
-            max_tokens=150
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": "Tum ek helpful AI ho jo simple Hindi me jawab deta hai."},
+        {"role": "user", "content": user_message}
+    ],
+    temperature=0.3,   
+    max_tokens=150      )
+
         )
         reply = response.choices[0].message["content"]
         cache[user_message] = reply  # cache save

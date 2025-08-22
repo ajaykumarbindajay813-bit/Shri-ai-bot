@@ -40,16 +40,18 @@ async def chat(request: Request):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Tum ek helpful AI ho jo simple Hindi me jawab deta hai."},
+                {"role": "system", "content": "Tum ek helpful AI ho jo simple Hindi me jawab deta ho."},
                 {"role": "user", "content": user_message}
             ],
             temperature=0.3,
             max_tokens=150
         )
 
-        reply = response.choices[0].message["content"]
+        # ✅ Updated line
+        reply = response.choices[0].message.content
         cache[user_message] = reply
         return {"reply": reply}
 
     except Exception as e:
         return {"reply": f"Error: API key ya network issue. {str(e)}"}
+

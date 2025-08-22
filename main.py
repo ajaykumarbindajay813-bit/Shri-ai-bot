@@ -31,4 +31,7 @@ async def chat(request: Request):
 
     reply = response.choices[0].message["content"]
     return {"reply": reply}
-                
+     from fastapi.staticfiles import StaticFiles
+
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
+           

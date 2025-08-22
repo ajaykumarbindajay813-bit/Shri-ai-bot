@@ -1,15 +1,25 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import openai
 import os
 
 app = FastAPI()
 
-# OpenAI key environment se le rahe hain
+# CORS allow all
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# OpenAI API key from environment
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-@app.get("/")
-def home():
-    return {"message": "🤖 Aapka AI Assistant ab chal raha hai!"}
+# Serve index.html and static files
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 @app.post("/chat")
 async def chat(request: Request):
@@ -19,19 +29,17 @@ async def chat(request: Request):
     if not user_message:
         return {"reply": "Kuch likho, main madad karta hoon 🙂"}
 
-    # OpenAI se reply
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Tum ek helpful AI ho jo simple Hindi me jawab deta hai."},
-            {"role": "user", "content": user_message}
-        ],
-        temperature=0.7
-    )
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Tum ek helpful AI ho jo simple Hindi me jawab deta hai."},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.7
+        )
+        reply = response.choices[0].message["content"]
+    except Exception as e:
+        reply = f"Error: {str(e)}"
 
-    reply = response.choices[0].message["content"]
     return {"reply": reply}
-     from fastapi.staticfiles import StaticFiles
-
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
-           

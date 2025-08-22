@@ -47,23 +47,27 @@ async def chat(request: Request):
     # Cache check
     if user_message in cache:
         return {"reply": cache[user_message]}
+try:
+    # Hugging Face मॉडल से जवाब
+    response = client.text_generation(
+        user_message,
+        max_new_tokens=150,
+        temperature=0.7
+    )
 
-    try:
-        # Hugging Face मॉडल से जवाब
-        response = client.text_generation(
-            user_message,
-            max_new_tokens=150,
-            temperature=0.7
-        )
+    # 🟢 Debug log डालो
+    print("HF Response:", response)
 
-        # कभी string आता है, कभी dict → दोनों handle करो
-        reply = response if isinstance(response, str) else str(response)
+    # कभी string आता है, कभी dict → दोनों handle करो
+    reply = response if isinstance(response, str) else str(response)
 
-        cache[user_message] = reply
-        return {"reply": reply}
+    cache[user_message] = reply
+    return {"reply": reply}
 
-    except Exception as e:
-        return {"reply": f"माफ़ करना, कुछ दिक्कत है: {e}"}
+except Exception as e:
+    return {"reply": f"माफ़ करना, कुछ दिक्कत है: {e}"}
+    
+   
 
 # ============================
 # Serve index.html

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import openai
+from huggingface_hub import InferenceClient
 import os
 
 app = FastAPI()
@@ -18,8 +18,12 @@ app.add_middleware(
 # Serve index.html
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
-# API Key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Hugging Face Access Token - इसे सीधे कोड में न डालें
+# बल्कि environment variable का उपयोग करें
+HF_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
+
+# Hugging Face Inference Client - यहाँ अपने मॉडल का नाम डालें
+client = InferenceClient(model="google/gemma-2b", token=HF_TOKEN)
 
 # Simple cache
 cache = {}
@@ -30,28 +34,28 @@ async def chat(request: Request):
     user_message = data.get("message", "").strip()
 
     if not user_message:
-        return {"reply": "Kuch likho, main madad karta hoon 🙂"}
+        return {"reply": "कुछ तो लिखो, मैं मदद करता हूँ 🙂"}
 
     # Cache check
     if user_message in cache:
         return {"reply": cache[user_message]}
+    
+    # यदि टोकन नहीं मिला तो एरर भेजें
+    if not HF_TOKEN:
+        return {"reply": "Error: Hugging Face Token is not set. Please set the HUGGING_FACE_TOKEN environment variable."}
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Tum ek helpful AI ho jo simple Hindi me jawab deta ho."},
-                {"role": "user", "content": user_message}
-            ],
-            temperature=0.3,
-            max_tokens=150
+        # Hugging Face मॉडल से जवाब प्राप्त करना
+        response = client.text_generation(
+            prompt=user_message,
+            max_new_tokens=150,
+            temperature=0.7,
+            truncate=True
         )
 
-        # ✅ Updated line
-        reply = response.choices[0].message.content
+        reply = response.strip()
         cache[user_message] = reply
         return {"reply": reply}
 
     except Exception as e:
-        return {"reply": f"Error: API key ya network issue. {str(e)}"}
-
+        return {"reply": f"माफ़ करना, कुछ दिक्कत है: {e}"}

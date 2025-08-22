@@ -58,4 +58,5 @@ async def chat(request: Request):
         return {"reply": f"माफ़ करना, कुछ दिक्कत है: {e}"}
 
 # Serve index.html - इसे सबसे अंत में रखें
+# यह मानता है कि main.py और index.html एक ही फ़ोल्डर में हैं
 app.mount("/", StaticFiles(directory=".", html=True), name="static")

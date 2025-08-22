@@ -37,31 +37,26 @@ function addMsg(text, who){
   chat.scrollTop=chat.scrollHeight;
 }
 
-async function fetchWiki(query){
-  try{
-    const url=`https://hi.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
-    let res=await fetch(url);
-    if(!res.ok){
-      // fallback to English
-      const en=`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
-      res=await fetch(en);
-    }
-    const data=await res.json();
-    return data.extract || "माफ कीजिए, जानकारी नहीं मिली।";
-  }catch(e){
-    return "Error: जानकारी लाने में दिक्कत हो रही है।";
-  }
-}
-
 form.addEventListener("submit", async (e)=>{
   e.preventDefault();
   const q=inp.value.trim();
   if(!q) return;
+
   addMsg(q,"user");
   inp.value="";
   addMsg("सोच रहा हूँ...","bot");
-  const ans=await fetchWiki(q);
-  chat.lastChild.textContent=ans;
+
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: q})
+    });
+    const data = await res.json();
+    chat.lastChild.textContent = data.reply;
+  } catch(err) {
+    chat.lastChild.textContent = "माफ करें, अभी जवाब नहीं दे पा रहा हूँ।";
+  }
 });
 </script>
 </body>

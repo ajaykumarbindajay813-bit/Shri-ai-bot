@@ -15,9 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve index.html
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
-
 # Hugging Face Access Token - इसे सीधे कोड में न डालें
 # बल्कि environment variable का उपयोग करें
 HF_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
@@ -59,3 +56,6 @@ async def chat(request: Request):
 
     except Exception as e:
         return {"reply": f"माफ़ करना, कुछ दिक्कत है: {e}"}
+
+# Serve index.html - इसे सबसे अंत में रखें
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
